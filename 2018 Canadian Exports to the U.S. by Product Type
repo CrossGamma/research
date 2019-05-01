@@ -1,0 +1,24 @@
+rm(list=ls())
+library(ggplot2)
+library(dplyr)
+library(xlsx)
+library(data.table)
+library(ggridges)
+
+setwd("C:/Users/Giacomo/Documents/Visualizations in R/")
+dataset <- read.xlsx(file="Canadian Total Exports by Products 2018.xlsx",1)
+
+d <- dataset %>%
+     group_by(Product.ID) %>%
+     top_n(n = 5, wt = Total.Exports.US)
+d <- setDT(d)[, csum := cumsum(Total.Exports.US), Product.ID][]
+
+#Exports to US only
+require(scales)
+p <- subset(dataset, dataset$Country =='United States')
+ggplot(p, aes(x=reorder(Product, Total.Exports.US), y=(Total.Exports.US)/1000000,fill=Total.Exports.US)) +
+geom_bar(stat = "identity") + ylab("Value in billions of US dollars") +
+theme_bw() + labs(x=NULL) + theme(legend.position="none",plot.title = element_text(size=20)) + coord_flip() + scale_y_continuous(breaks=seq(0,95,5),labels = comma) +
+labs(caption = "Source: Trade Data Online Report. URL: https://www.ic.gc.ca/eic/site/tdo-dcd.nsf/eng/home", title = "2018 Canadian Exports to the U.S. by Product Type") +
+geom_text(aes(label = format(round((Total.Exports.US)/1000000,digits = 2),nsmall = 2),y = -2.5), size = 4)
+
